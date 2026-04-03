@@ -44,12 +44,15 @@
     }
 
     .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
-    }
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  transition: 0.3s;
+}
+.card.running {
+  box-shadow: 0 0 15px rgba(34,197,94,0.6);
+}
 
     .card:hover {
       transform: scale(1.02);
@@ -128,7 +131,7 @@ for (const id in data) {
   const m = data[id];
 
   const card = document.createElement("div");
-  card.className = "card";
+  card.className = "card " + statusClass;
 
   const statusText = checkStatus(m);
   const statusClass = statusText.toLowerCase();
@@ -138,24 +141,53 @@ for (const id in data) {
   const total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
   const efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : "0";
 
-  card.innerHTML = `
+ card.innerHTML = `
+  <div style="display:flex; justify-content:space-between; align-items:center;">
     <h3>${id}</h3>
-    <div class="status ${statusClass}">${statusText}</div>
-    <div class="metrics">
-      <div class="metric"><b>${m.rpm || 0}</b><br>RPM</div>
-      <div class="metric"><b>${m.today_count || 0}</b><br>Today</div>
-      <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run hrs</div>
-      <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop hrs</div>
-      <div class="metric"><b>${efficiency}%</b><br>Efficiency</div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <div style="
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        background:${statusClass === "running" ? "#22c55e" : statusClass === "offline" ? "#facc15" : "#ef4444"};
+      "></div>
+      <span class="status ${statusClass}">${statusText}</span>
     </div>
-    <div style="margin-top:10px; font-size:12px;">
-      Last Update: ${m.last_update_time || "N/A"}
+  </div>
+
+  <!-- 🔥 BIG RPM -->
+  <div style="font-size:42px; font-weight:bold; margin:10px 0;">
+    ${m.rpm || 0}
+    <span style="font-size:16px;">RPM</span>
+  </div>
+
+  <!-- 🔥 Progress Bar (Efficiency) -->
+  <div style="margin:10px 0;">
+    <div style="font-size:12px; margin-bottom:4px;">Efficiency ${efficiency}%</div>
+    <div style="background:#333; border-radius:6px; height:8px;">
+      <div style="
+        width:${efficiency}%;
+        height:8px;
+        background:#22c55e;
+        border-radius:6px;
+      "></div>
     </div>
-    <canvas id="chart-${id}"></canvas>
-  `;
+  </div>
+
+  <!-- 🔥 Metrics Grid -->
+  <div class="metrics">
+    <div class="metric"><b>${m.today_count || 0}</b><br>Production</div>
+    <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run (h)</div>
+    <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop (h)</div>
+  </div>
+
+  <div style="margin-top:10px; font-size:12px; opacity:0.7;">
+    Last: ${m.last_update_time || "N/A"}
+  </div>
+`;
 
   container.appendChild(card);
-  drawChart(id, m);
+
 }
   }
 
