@@ -120,38 +120,43 @@
     const container = document.getElementById("machines");
     container.innerHTML = "";
 
-    for (const id in data) {
-      const m = data[id];
-      const card = document.createElement("div");
-      card.className = "card";
+for (const id in data) {
 
-      const statusText = checkStatus(m);
-      const statusClass = statusText.toLowerCase();
+  // 🔥 Only process machines
+  if (!id.startsWith("machine_")) continue;
 
-      const runHours = (m.run_time_sec || 0) / 3600;
-      const stopHours = (m.stop_time_sec || 0) / 3600;
-      const total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
-      const efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : "0";
+  const m = data[id];
 
-      card.innerHTML = `
-        <h3>${id}</h3>
-        <div class="status ${statusClass}">${statusText}</div>
-        <div class="metrics">
-          <div class="metric"><b>${m.rpm || 0}</b><br>RPM</div>
-          <div class="metric"><b>${m.today_count || 0}</b><br>Today</div>
-          <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run hrs</div>
-          <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop hrs</div>
-          <div class="metric"><b>${efficiency}%</b><br>Efficiency</div>
-        </div>
-        <div style="margin-top:10px; font-size:12px;">
-          Last Update: ${m.last_update_time || "N/A"}
-        </div>
-        <canvas id="chart-${id}"></canvas>
-      `;
+  const card = document.createElement("div");
+  card.className = "card";
 
-      container.appendChild(card);
-      drawChart(id, m);
-    }
+  const statusText = checkStatus(m);
+  const statusClass = statusText.toLowerCase();
+
+  const runHours = (m.run_time_sec || 0) / 3600;
+  const stopHours = (m.stop_time_sec || 0) / 3600;
+  const total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
+  const efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : "0";
+
+  card.innerHTML = `
+    <h3>${id}</h3>
+    <div class="status ${statusClass}">${statusText}</div>
+    <div class="metrics">
+      <div class="metric"><b>${m.rpm || 0}</b><br>RPM</div>
+      <div class="metric"><b>${m.today_count || 0}</b><br>Today</div>
+      <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run hrs</div>
+      <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop hrs</div>
+      <div class="metric"><b>${efficiency}%</b><br>Efficiency</div>
+    </div>
+    <div style="margin-top:10px; font-size:12px;">
+      Last Update: ${m.last_update_time || "N/A"}
+    </div>
+    <canvas id="chart-${id}"></canvas>
+  `;
+
+  container.appendChild(card);
+  drawChart(id, m);
+}
   }
 
   // 🔹 Status check
