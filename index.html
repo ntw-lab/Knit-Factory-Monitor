@@ -1,56 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Factory Dashboard</title>
 
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="[gstatic.com](https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js)"></script>
+  <script src="[gstatic.com](https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js)"></script>
+  <script src="[gstatic.com](https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js)"></script>
+
+  <!-- Chart.js -->
+  <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
 
   <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --green: #22c55e;
+      --red: #ef4444;
+      --text: #fff;
+    }
+
     body {
-      font-family: Arial;
-      background: #0f172a;
-      color: white;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
       margin: 0;
-      padding: 20px;
+      padding: 10px;
     }
 
     h1 {
       text-align: center;
+      margin: 20px 0;
+      font-size: 1.8em;
     }
 
-    .container {
+    #machines {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 20px;
+      padding: 10px;
     }
 
     .card {
-      background: #1e293b;
-      padding: 20px;
+      background: var(--card);
       border-radius: 12px;
+      padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
     }
 
-    .running {
-      border-left: 5px solid #22c55e;
+    .card:hover {
+      transform: scale(1.02);
     }
 
-    .stopped {
-      border-left: 5px solid #ef4444;
-    }
-
-    .title {
-      font-size: 18px;
-      margin-bottom: 10px;
-      text-transform: uppercase;
-    }
-
-    .value {
-      font-size: 26px;
+    .status {
       font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .status.running { color: var(--green); }
+    .status.stopped { color: var(--red); }
+
+    .metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .metric {
+      flex: 1 1 100px;
+      background: rgba(255,255,255,0.05);
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 200px !important;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5em; }
+      .metric { flex: 1 1 45%; }
     }
   </style>
 </head>
@@ -58,102 +95,100 @@
 <body>
 
 <h1>Factory Machine Dashboard</h1>
-
-<div class="container" id="machines"></div>
+<div id="machines"></div>
 
 <script>
   // 🔹 Firebase Config
-  var firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
-    databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
+    databaseURL: "[knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app](https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app)"
   };
 
-  // 🔹 Initialize Firebase (ONLY ONCE)
   firebase.initializeApp(firebaseConfig);
 
-  // 🔹 Login
-  firebase.auth().signInWithEmailAndPassword(
-    "volthigh1@gmail.com",
-    "Knit1234"
-  )
-  .then(() => {
-    console.log("Login successful");
+  // 🔹 Login session
+  firebase.auth().signInWithEmailAndPassword("volthigh1@gmail.com", "Knit1234")
+    .then(() => {
+      console.log("Authenticated");
+      const db = firebase.database().ref("machines");
+      db.on("value", snapshot => renderMachines(snapshot.val() || {}));
+    })
+    .catch(err => alert("Login failed: " + err.message));
 
-    var db = firebase.database();
+  // 🔹 Render UI
+  function renderMachines(data) {
+    const container = document.getElementById("machines");
+    container.innerHTML = "";
 
-    // 🔹 Listen for real-time updates
-    db.ref("machines").on("value", function(snapshot) {
+    for (const id in data) {
+      const m = data[id];
+      const card = document.createElement("div");
+      card.className = "card";
 
-      let data = snapshot.val();
-      console.log(data);
+      const statusText = checkStatus(m);
+      const statusClass = statusText.toLowerCase();
 
-      let container = document.getElementById("machines");
-      container.innerHTML = "";
+      const runHours = (m.run_time_sec || 0) / 3600;
+      const stopHours = (m.stop_time_sec || 0) / 3600;
+      const total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
+      const efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : "0";
 
-      // If no data
-      if (!data) {
-        container.innerHTML = "<p>No machine data found</p>";
-        return;
-      }
+      card.innerHTML = `
+        <h3>${id}</h3>
+        <div class="status ${statusClass}">${statusText}</div>
+        <div class="metrics">
+          <div class="metric"><b>${m.rpm || 0}</b><br>RPM</div>
+          <div class="metric"><b>${m.today_count || 0}</b><br>Today</div>
+          <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run hrs</div>
+          <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop hrs</div>
+          <div class="metric"><b>${efficiency}%</b><br>Efficiency</div>
+        </div>
+        <div style="margin-top:10px; font-size:12px;">
+          Last Update: ${m.last_update_time || "N/A"}
+        </div>
+        <canvas id="chart-${id}"></canvas>
+      `;
 
-      // 🔹 Loop through machines
-      for (let id in data) {
-        let m = data[id];
-
-        let statusClass = m.status ? "running" : "stopped";
-        let statusText = m.status ? "Running" : "Stopped";
-        let statusColor = statusText === "Running" ? "#22c55e" : "#ef4444";
-
-        // 🔥 Convert time to hours
-        let runHours = m.run_time_sec ? (m.run_time_sec / 3600).toFixed(2) : 0;
-        let stopHours = m.stop_time_sec ? (m.stop_time_sec / 3600).toFixed(2) : 0;
-        
-        // 🔥 Efficiency
-        let total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
-        let efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : 0;
-
-// 🔥 Offline detection (fixed)
-if (m.last_update_time) {
-  let now = new Date();
-  let last = new Date(m.last_update_time.replace(" ", "T"));
-
-  let diff = (now - last) / 1000;
-
-  if (diff > 10) {
-    statusText = "Offline";
-    statusClass = "stopped";
+      container.appendChild(card);
+      drawChart(id, m);
+    }
   }
-}
 
-       let card = `
-  <div class="card ${statusClass}">
-    <div class="title">${id}</div>
+  // 🔹 Status check
+  function checkStatus(machine) {
+    if (!machine.last_update_time)
+      return "Unknown";
 
-    <div>Status: <span style="color:${statusColor}">${statusText}</span></div>
+    const now = new Date();
+    const last = new Date(machine.last_update_time.replace(" ", "T"));
+    const diff = (now - last) / 1000;
 
-    <div>RPM: <span class="value">${m.rpm}</span></div>
+    if (diff > 20) return "Offline";
+    return machine.status ? "Running" : "Stopped";
+  }
 
-    <div>Today Count: ${m.today_count || 0}</div>
-
-    <div>Run Time: ${runHours} hrs</div>
-    <div>Stop Time: ${stopHours} hrs</div>
-
-    <div>Efficiency: ${efficiency}%</div>
-
-    <div>Last Update: ${m.last_update_time || "N/A"}</div>
-  </div>
-`;
-
-        container.innerHTML += card;
+  // 🔹 Chart.js logic
+  function drawChart(id, m) {
+    const ctx = document.getElementById(`chart-${id}`);
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Run Time', 'Stop Time'],
+        datasets: [{
+          data: [m.run_time_sec || 0, m.stop_time_sec || 0],
+          backgroundColor: ['#22c55e', '#ef4444'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+        },
+        cutout: '70%',
       }
-
     });
-
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Login Failed: " + err.message);
-  });
+  }
 </script>
 
 </body>
