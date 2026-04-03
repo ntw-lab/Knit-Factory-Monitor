@@ -165,7 +165,7 @@ for (const id in data) {
       return "Unknown";
 
     const now = new Date();
-    const last = new Date(machine.last_update_time.replace(" ", "T"));
+    const last = new Date(machine.last_update_time.replace(" ", "T") + "+06:00");
     const diff = (now - last) / 1000;
 
     if (diff > 20) return "Offline";
