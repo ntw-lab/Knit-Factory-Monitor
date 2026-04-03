@@ -104,6 +104,14 @@
         let statusText = m.status ? "Running" : "Stopped";
         let statusColor = statusText === "Running" ? "#22c55e" : "#ef4444";
 
+        // 🔥 Convert time to hours
+        let runHours = m.run_time_sec ? (m.run_time_sec / 3600).toFixed(2) : 0;
+        let stopHours = m.stop_time_sec ? (m.stop_time_sec / 3600).toFixed(2) : 0;
+        
+        // 🔥 Efficiency
+        let total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
+        let efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : 0;
+
 // 🔥 Offline detection (fixed)
 if (m.last_update_time) {
   let now = new Date();
@@ -120,9 +128,18 @@ if (m.last_update_time) {
        let card = `
   <div class="card ${statusClass}">
     <div class="title">${id}</div>
+
     <div>Status: <span style="color:${statusColor}">${statusText}</span></div>
+
     <div>RPM: <span class="value">${m.rpm}</span></div>
-    <div>Count: ${m.count}</div>
+
+    <div>Today Count: ${m.today_count || 0}</div>
+
+    <div>Run Time: ${runHours} hrs</div>
+    <div>Stop Time: ${stopHours} hrs</div>
+
+    <div>Efficiency: ${efficiency}%</div>
+
     <div>Last Update: ${m.last_update_time || "N/A"}</div>
   </div>
 `;
