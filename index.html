@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Factory Dashboard</title>
+
+
+    <script>
+  var firebaseConfig = {
+    apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
+    databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  firebase.auth().signInWithEmailAndPassword(
+    "volthigh1@gmail.com",
+    "Knit1234"
+  ).then(() => {
+
+    var db = firebase.database();
+
+    db.ref("machines").on("value", function(snapshot) {
+      let data = snapshot.val();
+
+      let container = document.getElementById("machines");
+      container.innerHTML = "";
+
+      for (let id in data) {
+        let m = data[id];
+
+        let statusClass = m.status ? "running" : "stopped";
+        let statusText = m.status ? "Running" : "Stopped";
+
+        let card = `
+          <div class="card ${statusClass}">
+            <div class="title">${id}</div>
+            <div>Status: ${statusText}</div>
+            <div>RPM: <span class="value">${m.rpm}</span></div>
+            <div>Count: ${m.count}</div>
+          </div>
+        `;
+
+        container.innerHTML += card;
+      }
+    });
+
+  }).catch(err => {
+    alert("Login Failed: " + err.message);
+  });
+</script>
+
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .running {
+      border-left: 5px solid #22c55e;
+    }
+
+    .stopped {
+      border-left: 5px solid #ef4444;
+    }
+
+    .title {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .value {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Factory Machine Dashboard</h1>
+
+<div class="container" id="machines"></div>
+
+<script>
+  var firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    databaseURL: "https://your-project-id.firebaseio.com"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  var db = firebase.database();
+
+  db.ref("machines").on("value", function(snapshot) {
+    let data = snapshot.val();
+
+    let container = document.getElementById("machines");
+    container.innerHTML = "";
+
+    for (let id in data) {
+      let m = data[id];
+
+      let statusClass = m.status ? "running" : "stopped";
+      let statusText = m.status ? "Running" : "Stopped";
+
+      let card = `
+        <div class="card ${statusClass}">
+          <div class="title">${id}</div>
+          <div>Status: ${statusText}</div>
+          <div>RPM: <span class="value">${m.rpm}</span></div>
+          <div>Count: ${m.count}</div>
+        </div>
+      `;
+
+      container.innerHTML += card;
+    }
+  });
+</script>
+
+</body>
+</html>
