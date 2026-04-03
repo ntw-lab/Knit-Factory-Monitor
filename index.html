@@ -3,54 +3,10 @@
 <head>
   <title>Factory Dashboard</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script>
-  var firebaseConfig = {
-    apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
-    databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-
-  firebase.auth().signInWithEmailAndPassword(
-    "volthigh1@gmail.com",
-    "Knit1234"
-  ).then(() => {
-
-    var db = firebase.database();
-
-    db.ref("machines").on("value", function(snapshot) {
-      let data = snapshot.val();
-
-      let container = document.getElementById("machines");
-      container.innerHTML = "";
-
-      for (let id in data) {
-        let m = data[id];
-
-        let statusClass = m.status ? "running" : "stopped";
-        let statusText = m.status ? "Running" : "Stopped";
-
-        let card = `
-          <div class="card ${statusClass}">
-            <div class="title">${id}</div>
-            <div>Status: ${statusText}</div>
-            <div>RPM: <span class="value">${m.rpm}</span></div>
-            <div>Count: ${m.count}</div>
-          </div>
-        `;
-
-        container.innerHTML += card;
-      }
-    });
-
-  }).catch(err => {
-    alert("Login Failed: " + err.message);
-  });
-</script>
-
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
   <style>
     body {
@@ -89,10 +45,11 @@
     .title {
       font-size: 18px;
       margin-bottom: 10px;
+      text-transform: uppercase;
     }
 
     .value {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: bold;
     }
   </style>
@@ -105,38 +62,65 @@
 <div class="container" id="machines"></div>
 
 <script>
+  // 🔹 Firebase Config
   var firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    databaseURL: "https://your-project-id.firebaseio.com"
+    apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
+    databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
   };
 
+  // 🔹 Initialize Firebase (ONLY ONCE)
   firebase.initializeApp(firebaseConfig);
 
-  var db = firebase.database();
+  // 🔹 Login
+  firebase.auth().signInWithEmailAndPassword(
+    "volthigh1@gmail.com",
+    "Knit1234"
+  )
+  .then(() => {
+    console.log("Login successful");
 
-  db.ref("machines").on("value", function(snapshot) {
-    let data = snapshot.val();
+    var db = firebase.database();
 
-    let container = document.getElementById("machines");
-    container.innerHTML = "";
+    // 🔹 Listen for real-time updates
+    db.ref("machines").on("value", function(snapshot) {
 
-    for (let id in data) {
-      let m = data[id];
+      let data = snapshot.val();
+      console.log(data);
 
-      let statusClass = m.status ? "running" : "stopped";
-      let statusText = m.status ? "Running" : "Stopped";
+      let container = document.getElementById("machines");
+      container.innerHTML = "";
 
-      let card = `
-        <div class="card ${statusClass}">
-          <div class="title">${id}</div>
-          <div>Status: ${statusText}</div>
-          <div>RPM: <span class="value">${m.rpm}</span></div>
-          <div>Count: ${m.count}</div>
-        </div>
-      `;
+      // If no data
+      if (!data) {
+        container.innerHTML = "<p>No machine data found</p>";
+        return;
+      }
 
-      container.innerHTML += card;
-    }
+      // 🔹 Loop through machines
+      for (let id in data) {
+        let m = data[id];
+
+        let statusClass = m.status ? "running" : "stopped";
+        let statusText = m.status ? "Running" : "Stopped";
+
+        let card = `
+          <div class="card ${statusClass}">
+            <div class="title">${id}</div>
+            <div>Status: ${statusText}</div>
+            <div>RPM: <span class="value">${m.rpm}</span></div>
+            <div>Count: ${m.count}</div>
+          </div>
+        `;
+
+        container.innerHTML += card;
+      }
+
+    });
+
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Login Failed: " + err.message);
   });
 </script>
 
