@@ -101,16 +101,30 @@
         let m = data[id];
 
         let statusClass = m.status ? "running" : "stopped";
-        let statusText = m.status ? "Running" : "Stopped";
+let statusText = m.status ? "Running" : "Stopped";
 
-        let card = `
-          <div class="card ${statusClass}">
-            <div class="title">${id}</div>
-            <div>Status: ${statusText}</div>
-            <div>RPM: <span class="value">${m.rpm}</span></div>
-            <div>Count: ${m.count}</div>
-          </div>
-        `;
+// 🔥 Check if machine offline
+if (m.last_update_time) {
+  let now = new Date();
+  let last = new Date(m.last_update_time);
+
+  let diff = (now - last) / 1000;
+
+  if (diff > 10) {
+    statusText = "Offline";
+    statusClass = "stopped";
+  }
+}
+
+       let card = `
+  <div class="card ${statusClass}">
+    <div class="title">${id}</div>
+    <div>Status: ${statusText}</div>
+    <div>RPM: <span class="value">${m.rpm}</span></div>
+    <div>Count: ${m.count}</div>
+    <div>Last Update: ${m.last_update_time || "N/A"}</div>
+  </div>
+`;
 
         container.innerHTML += card;
       }
