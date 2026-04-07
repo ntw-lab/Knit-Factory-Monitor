@@ -2,198 +2,1301 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factory Dashboard</title>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
-  <!-- Chart.js -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Machine Detail Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --green: #22c55e;
-      --red: #ef4444;
-      --text: #fff;
+      --bg-primary:    #0f172a;
+      --bg-card:       #1e293b;
+      --bg-card-hover: #263548;
+      --border:        #334155;
+      --green:         #22c55e;
+      --green-dim:     #15803d;
+      --red:           #ef4444;
+      --red-dim:       #991b1b;
+      --yellow:        #f59e0b;
+      --yellow-dim:    #92400e;
+      --blue:          #3b82f6;
+      --purple:        #a855f7;
+      --cyan:          #06b6d4;
+      --text-primary:  #f1f5f9;
+      --text-secondary:#94a3b8;
+      --text-muted:    #64748b;
+      --radius:        12px;
+      --radius-sm:     8px;
+      --shadow:        0 4px 24px rgba(0,0,0,0.4);
+      --transition:    0.25s ease;
     }
+
+    html { font-size: 16px; }
 
     body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 10px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      line-height: 1.5;
     }
 
-    h1 {
-      text-align: center;
-      margin: 20px 0;
-      font-size: 1.8em;
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ============================================================
+       LAYOUT WRAPPER
+    ============================================================ */
+    .page-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 20px;
     }
 
-    #machines {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    /* ============================================================
+       BACK BUTTON
+    ============================================================ */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all var(--transition);
+      margin-bottom: 24px;
+    }
+    .back-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--blue);
+      transform: translateX(-3px);
+    }
+    .back-btn svg { width: 16px; height: 16px; }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    .header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--cyan), var(--purple));
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+
+    .machine-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--blue), var(--cyan));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .machine-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+    .machine-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
       gap: 20px;
-      padding: 10px;
+      flex-wrap: wrap;
     }
 
-    .card {
-      background: var(--card);
-      border-radius: 12px;
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .status-badge.running {
+      background: rgba(34,197,94,0.15);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,0.4);
+    }
+    .status-badge.stopped {
+      background: rgba(239,68,68,0.15);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,0.4);
+    }
+    .status-badge.offline {
+      background: rgba(100,116,139,0.15);
+      color: var(--text-muted);
+      border: 1px solid rgba(100,116,139,0.4);
+    }
+
+    /* Blinking live dot */
+    .live-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .running .live-dot {
+      background: var(--green);
+      box-shadow: 0 0 0 0 rgba(34,197,94,0.7);
+      animation: pulse-green 1.5s infinite;
+    }
+    .stopped .live-dot {
+      background: var(--red);
+      animation: none;
+    }
+    .offline .live-dot {
+      background: var(--text-muted);
+      animation: none;
+    }
+
+    @keyframes pulse-green {
+      0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+      70%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .last-update {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+    .last-update span {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* ============================================================
+       KPI CARDS GRID
+    ============================================================ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
       padding: 20px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
+      cursor: default;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .kpi-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 0 0 var(--radius) var(--radius);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .kpi-card:hover { background: var(--bg-card-hover); transform: translateY(-3px); }
+    .kpi-card:hover::after { opacity: 1; }
+
+    .kpi-card.accent-blue::after   { background: var(--blue); }
+    .kpi-card.accent-green::after  { background: var(--green); }
+    .kpi-card.accent-yellow::after { background: var(--yellow); }
+    .kpi-card.accent-red::after    { background: var(--red); }
+    .kpi-card.accent-cyan::after   { background: var(--cyan); }
+    .kpi-card.accent-purple::after { background: var(--purple); }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kpi-label .icon { font-size: 1rem; }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+      font-variant-numeric: tabular-nums;
+    }
+    .kpi-unit {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .kpi-sub {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
     }
 
-    .card:hover {
-      transform: scale(1.02);
+    .accent-blue   .kpi-value { color: var(--blue); }
+    .accent-green  .kpi-value { color: var(--green); }
+    .accent-yellow .kpi-value { color: var(--yellow); }
+    .accent-red    .kpi-value { color: var(--red); }
+    .accent-cyan   .kpi-value { color: var(--cyan); }
+    .accent-purple .kpi-value { color: var(--purple); }
+
+    /* Health bar inside KPI */
+    .health-bar-wrap {
+      margin-top: 10px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .health-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s ease;
     }
 
-    .status {
-      font-weight: bold;
+    /* ============================================================
+       CHARTS SECTION
+    ============================================================ */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      transition: all var(--transition);
+    }
+    .chart-card:hover { border-color: #475569; }
+
+    .chart-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chart-title .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    .doughnut-wrap {
+      position: relative;
+      max-width: 240px;
+      margin: 0 auto;
+    }
+    .doughnut-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .doughnut-center .big { font-size: 1.8rem; font-weight: 800; color: var(--green); }
+    .doughnut-center .small { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 18px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .line-chart-wrap { height: 240px; }
+
+    /* ============================================================
+       PERFORMANCE ANALYTICS
+    ============================================================ */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 700px) {
+      .analytics-grid { grid-template-columns: 1fr; }
+    }
+
+    .analytics-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .analytics-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    /* Efficiency progress bar */
+    .progress-row {
+      margin-bottom: 18px;
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 8px;
     }
+    .progress-label .name { font-size: 0.875rem; color: var(--text-secondary); }
+    .progress-label .val  { font-size: 0.875rem; font-weight: 700; }
 
-    .status.running { color: var(--green); }
-    .status.stopped { color: var(--red); }
+    .progress-track {
+      height: 10px;
+      background: var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      width: 6px; height: 100%;
+      background: rgba(255,255,255,0.4);
+      border-radius: 3px;
+    }
 
-    .metrics {
+    /* Ratio bar */
+    .ratio-bar-wrap {
+      margin: 16px 0;
+    }
+    .ratio-bar {
       display: flex;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      gap: 2px;
+    }
+    .ratio-run, .ratio-stop {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+      color: #fff;
+      min-width: 30px;
+    }
+    .ratio-run  { background: var(--green); border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .ratio-stop { background: var(--red);   border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+
+    .ratio-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+    .ratio-labels .run-lbl { color: var(--green); }
+    .ratio-labels .stp-lbl { color: var(--red); }
+
+    /* Insight box */
+    .insight-box {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.5;
+    }
+    .insight-box.good {
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: var(--green);
+    }
+    .insight-box.warn {
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      color: var(--yellow);
+    }
+    .insight-box.bad {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--red);
+    }
+    .insight-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* Stats list */
+    .stats-list { list-style: none; }
+    .stats-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.875rem;
+    }
+    .stats-item:last-child { border-bottom: none; }
+    .stats-item .s-key { color: var(--text-secondary); }
+    .stats-item .s-val { font-weight: 600; color: var(--text-primary); }
+    .stats-item .s-val.green { color: var(--green); }
+    .stats-item .s-val.red   { color: var(--red); }
+    .stats-item .s-val.yellow{ color: var(--yellow); }
+
+    /* ============================================================
+       FOOTER TIMESTAMP
+    ============================================================ */
+    .footer-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
+    .footer-bar .brand { color: var(--text-secondary); font-weight: 500; }
+    .footer-date { color: var(--text-secondary); }
 
-    .metric {
-      flex: 1 1 100px;
-      background: rgba(255,255,255,0.05);
-      padding: 8px;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    canvas {
-      width: 100% !important;
-      height: 200px !important;
-    }
-
-    /* Mobile tweaks */
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
     @media (max-width: 600px) {
-      h1 { font-size: 1.5em; }
-      .metric { flex: 1 1 45%; }
+      .machine-name { font-size: 1.2rem; }
+      .kpi-value    { font-size: 1.5rem; }
+      .header       { padding: 16px; }
+      .page-wrapper { padding: 16px 12px; }
+      .kpi-grid     { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
-
 <body>
 
-<h1>Factory Machine Dashboard</h1>
-<div id="machines"></div>
+<div class="page-wrapper">
 
+  <!-- Back Button -->
+  <a href="#" class="back-btn" onclick="history.back(); return false;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Back to Dashboard
+  </a>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 1 : HEADER
+  ═══════════════════════════════════════ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="machine-icon">⚙️</div>
+      <div>
+        <div class="machine-name" id="machineName">—</div>
+        <div class="machine-subtitle">Machine Detail View</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="statusBadge" class="status-badge">
+        <div class="live-dot"></div>
+        <span id="statusText">—</span>
+      </div>
+      <div class="last-update">
+        Last Updated
+        <span id="lastUpdateTime">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SECTION 2 : KPI CARDS
+  ═══════════════════════════════════════ -->
+  <div class="kpi-grid">
+
+    <!-- RPM -->
+    <div class="kpi-card accent-blue">
+      <div class="kpi-label"><span class="icon">⚡</span>RPM</div>
+      <div class="kpi-value" id="kpiRpm">0</div>
+      <div class="kpi-unit">revolutions / min</div>
+      <div class="kpi-sub" id="kpiRpmSub">—</div>
+    </div>
+
+    <!-- Production Count -->
+    <div class="kpi-card accent-green">
+      <div class="kpi-label"><span class="icon">📦</span>Today's Production</div>
+      <div class="kpi-value" id="kpiCount">0</div>
+      <div class="kpi-unit">units produced</div>
+      <div class="kpi-sub" id="kpiCountSub">—</div>
+    </div>
+
+    <!-- Run Time -->
+    <div class="kpi-card accent-cyan">
+      <div class="kpi-label"><span class="icon">▶️</span>Run Time</div>
+      <div class="kpi-value" id="kpiRunTime">0.0</div>
+      <div class="kpi-unit">hours</div>
+      <div class="kpi-sub" id="kpiRunSub">—</div>
+    </div>
+
+    <!-- Stop Time -->
+    <div class="kpi-card accent-red">
+      <div class="kpi-label"><span class="icon">⏸️</span>Stop Time</div>
+      <div class="kpi-value" id="kpiStopTime">0.0</div>
+      <div class="kpi-unit">hours</div>
+      <div class="kpi-sub" id="kpiStopSub">—</div>
+    </div>
+
+    <!-- Efficiency -->
+    <div class="kpi-card accent-yellow">
+      <div class="kpi-label"><span class="icon">📊</span>Efficiency</div>
+      <div class="kpi-value" id="kpiEff">0</div>
+      <div class="kpi-unit">percent</div>
+      <div class="health-bar-wrap">
+        <div class="health-bar-fill" id="kpiEffBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Health Indicator -->
+    <div class="kpi-card accent-purple">
+      <div class="kpi-label"><span class="icon">💡</span>Health Score</div>
+      <div class="kpi-value" id="kpiHealth">0</div>
+      <div class="kpi-unit">/ 100</div>
+      <div class="kpi-sub" id="kpiHealthSub">—</div>
+      <div class="health-bar-wrap">
+        <div class="health-bar-fill" id="kpiHealthBar" style="width:0%; background: #a855f7;"></div>
+      </div>
+    </div>
+
+  </div><!-- /kpi-grid -->
+
+  <!-- ═══════════════════════════════════════
+       SECTION 3 : CHARTS
+  ═══════════════════════════════════════ -->
+  <div class="charts-grid">
+
+    <!-- Doughnut: Run vs Stop -->
+    <div class="chart-card">
+      <div class="chart-title">
+        <div class="dot" style="background:var(--green)"></div>
+        Run vs Stop Time
+      </div>
+      <div class="doughnut-wrap">
+        <canvas id="doughnutChart"></canvas>
+        <div class="doughnut-center">
+          <div class="big" id="doughnutCenter">0%</div>
+          <div class="small">Efficiency</div>
+        </div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--green)"></div>
+          Run Time
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:var(--red)"></div>
+          Stop Time
+        </div>
+      </div>
+    </div>
+
+    <!-- Line: RPM Trend -->
+    <div class="chart-card">
+      <div class="chart-title">
+        <div class="dot" style="background:var(--blue)"></div>
+        RPM Trend (Last 12 Readings)
+      </div>
+      <div class="line-chart-wrap">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+
+  </div><!-- /charts-grid -->
+
+  <!-- ═══════════════════════════════════════
+       SECTION 4 : PERFORMANCE ANALYTICS
+  ═══════════════════════════════════════ -->
+  <div class="analytics-grid">
+
+    <!-- Efficiency Progress -->
+    <div class="analytics-card">
+      <div class="analytics-title">📈 Performance Breakdown</div>
+
+      <div class="progress-row">
+        <div class="progress-label">
+          <span class="name">Operational Efficiency</span>
+          <span class="val" id="anaEff" style="color:var(--yellow)">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="anaEffBar"
+               style="width:0%; background:linear-gradient(90deg,var(--yellow-dim),var(--yellow))"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label">
+          <span class="name">Run Time Share</span>
+          <span class="val" id="anaRunShare" style="color:var(--green)">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="anaRunBar"
+               style="width:0%; background:linear-gradient(90deg,var(--green-dim),var(--green))"></div>
+        </div>
+      </div>
+
+      <div class="progress-row">
+        <div class="progress-label">
+          <span class="name">Stop Time Share</span>
+          <span class="val" id="anaStopShare" style="color:var(--red)">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="anaStopBar"
+               style="width:0%; background:linear-gradient(90deg,var(--red-dim),var(--red))"></div>
+        </div>
+      </div>
+
+      <!-- Run vs Stop ratio bar -->
+      <div class="ratio-bar-wrap">
+        <div class="ratio-bar">
+          <div class="ratio-run"  id="ratioRun"  style="width:50%">Run</div>
+          <div class="ratio-stop" id="ratioStop" style="width:50%">Stop</div>
+        </div>
+        <div class="ratio-labels">
+          <span class="run-lbl" id="ratioRunLbl">Run: 0h</span>
+          <span class="stp-lbl" id="ratioStopLbl">Stop: 0h</span>
+        </div>
+      </div>
+
+      <!-- Insight -->
+      <div id="insightBox" class="insight-box good">
+        <span class="insight-icon" id="insightIcon">✅</span>
+        <span id="insightText">Calculating…</span>
+      </div>
+    </div>
+
+    <!-- Detailed Stats -->
+    <div class="analytics-card">
+      <div class="analytics-title">🔎 Detailed Statistics</div>
+      <ul class="stats-list">
+        <li class="stats-item">
+          <span class="s-key">Machine Name</span>
+          <span class="s-val" id="statName">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Current Status</span>
+          <span class="s-val" id="statStatus">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Current RPM</span>
+          <span class="s-val" id="statRpm">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Run Time (hrs)</span>
+          <span class="s-val green" id="statRun">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Stop Time (hrs)</span>
+          <span class="s-val red" id="statStop">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Total Active Time</span>
+          <span class="s-val" id="statTotal">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Efficiency</span>
+          <span class="s-val yellow" id="statEff">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Units / Running Hour</span>
+          <span class="s-val" id="statUph">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Current Date</span>
+          <span class="s-val" id="statDate">—</span>
+        </li>
+        <li class="stats-item">
+          <span class="s-key">Last Update</span>
+          <span class="s-val" id="statUpdate">—</span>
+        </li>
+      </ul>
+    </div>
+
+  </div><!-- /analytics-grid -->
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════ -->
+  <div class="footer-bar">
+    <span class="brand">⚙️ Industrial Machine Monitoring System</span>
+    <span class="footer-date" id="footerDate">—</span>
+  </div>
+
+</div><!-- /page-wrapper -->
+
+<!-- ============================================================
+     JAVASCRIPT — DATA SYSTEM + UI RENDERER
+============================================================ -->
 <script>
-  // 🔹 Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
-    databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
-  };
+/* ================================================================
+   ① MACHINE DATA OBJECT
+   ──────────────────────────────────────────────────────────────
+   Replace this object (or update its properties) with real
+   Firebase Realtime Database values later.
+   Everything in the UI is driven exclusively by this object.
+================================================================ */
+const machineData = {
+  name:             "CNC Machine 1",
+  rpm:              20,
+  today_count:      6200,
+  run_time_sec:     18600,
+  stop_time_sec:    3000,
+  status:           1,                    // 1 = running | 0 = stopped
+  last_update_time: "2026-04-07 12:30:00",
+  current_date:     "2026-04-07"
+};
 
-  firebase.initializeApp(firebaseConfig);
+/* ================================================================
+   ② PURE UTILITY FUNCTIONS
+================================================================ */
 
-  // 🔹 Login session
-  firebase.auth().signInWithEmailAndPassword("volthigh1@gmail.com", "Knit1234")
-    .then(() => {
-      console.log("Authenticated");
-      const db = firebase.database().ref("machines");
-      db.on("value", snapshot => renderMachines(snapshot.val() || {}));
-    })
-    .catch(err => alert("Login failed: " + err.message));
-
-  // 🔹 Render UI
-  function renderMachines(data) {
-    const container = document.getElementById("machines");
-    container.innerHTML = "";
-
-for (const id in data) {
-
-  // 🔥 Only process machines
-  if (!id.startsWith("machine_")) continue;
-
-  const m = data[id];
-
-  const card = document.createElement("div");
-  card.className = "card";
-
-  const statusText = checkStatus(m);
-  const statusClass = statusText.toLowerCase();
-
-  const runHours = (m.run_time_sec || 0) / 3600;
-  const stopHours = (m.stop_time_sec || 0) / 3600;
-  const total = (m.run_time_sec || 0) + (m.stop_time_sec || 0);
-  const efficiency = total > 0 ? ((m.run_time_sec / total) * 100).toFixed(1) : "0";
-
-  card.innerHTML = `
-    <h3>${id}</h3>
-    <div class="status ${statusClass}">${statusText}</div>
-    <div class="metrics">
-      <div class="metric"><b>${m.rpm || 0}</b><br>RPM</div>
-      <div class="metric"><b>${m.today_count || 0}</b><br>Today</div>
-      <div class="metric"><b>${runHours.toFixed(2)}</b><br>Run hrs</div>
-      <div class="metric"><b>${stopHours.toFixed(2)}</b><br>Stop hrs</div>
-      <div class="metric"><b>${efficiency}%</b><br>Efficiency</div>
-    </div>
-    <div style="margin-top:10px; font-size:12px;">
-      Last Update: ${m.last_update_time || "N/A"}
-    </div>
-    <canvas id="chart-${id}"></canvas>
-  `;
-
-  container.appendChild(card);
-  drawChart(id, m);
+/**
+ * Convert seconds → decimal hours  (e.g. 3661 → "1.02")
+ */
+function secToHrs(sec) {
+  return (sec / 3600).toFixed(2);
 }
+
+/**
+ * Convert seconds → "Xh Ym" readable string
+ */
+function secToHrsMin(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+
+/**
+ * Calculate efficiency percentage (0–100)
+ */
+function calcEfficiency(runSec, stopSec) {
+  const total = runSec + stopSec;
+  if (total === 0) return 0;
+  return Math.round((runSec / total) * 100);
+}
+
+/**
+ * Calculate health score (0–100) based on efficiency + rpm factor
+ * Health drops if efficiency < 50 or rpm is 0 while supposedly running
+ */
+function calcHealthScore(efficiency, rpm, status) {
+  let score = efficiency;                        // base = efficiency
+  if (status === 1 && rpm === 0) score -= 20;   // running but no rpm → penalise
+  if (status === 1 && rpm > 0)   score += 5;    // bonus for healthy spin
+  if (efficiency >= 90)           score += 5;   // bonus for excellence
+  return Math.min(100, Math.max(0, Math.round(score)));
+}
+
+/**
+ * Determine if machine is offline:
+ * offline if last_update_time is older than OFFLINE_THRESHOLD_SEC
+ */
+const OFFLINE_THRESHOLD_SEC = 20;
+
+function isOffline(lastUpdateStr) {
+  try {
+    const last = new Date(lastUpdateStr.replace(" ", "T") + "+06:00");
+    const nowMs   = Date.now();
+    const diffSec = (nowMs - last.getTime()) / 1000;
+    return diffSec > OFFLINE_THRESHOLD_SEC;
+  } catch {
+    return true; // treat parse errors as offline
   }
+}
 
-  // 🔹 Status check
-  function checkStatus(machine) {
-    if (!machine.last_update_time)
-      return "Unknown";
+/**
+ * Animated counter — smoothly counts from 0 to target value
+ */
+function animateCounter(elementId, targetValue, decimals = 0, duration = 1200) {
+  const el      = document.getElementById(elementId);
+  if (!el) return;
+  const start   = performance.now();
+  const from    = 0;
 
-    const now = new Date();
-    const last = new Date(machine.last_update_time.replace(" ", "T") + "+06:00");
-    const diff = (now - last) / 1000;
-
-    if (diff > 20) return "Offline";
-    return machine.status ? "Running" : "Stopped";
+  function step(now) {
+    const elapsed  = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // ease-out cubic
+    const eased    = 1 - Math.pow(1 - progress, 3);
+    const current  = from + (targetValue - from) * eased;
+    el.textContent = decimals > 0
+      ? current.toFixed(decimals)
+      : Math.round(current).toLocaleString();
+    if (progress < 1) requestAnimationFrame(step);
   }
+  requestAnimationFrame(step);
+}
 
-  // 🔹 Chart.js logic
-  function drawChart(id, m) {
-    const ctx = document.getElementById(`chart-${id}`);
-    if (!ctx) return;
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Run Time', 'Stop Time'],
-        datasets: [{
-          data: [m.run_time_sec || 0, m.stop_time_sec || 0],
-          backgroundColor: ['#22c55e', '#ef4444'],
-          borderWidth: 0,
-        }]
+/**
+ * Generate a simulated RPM trend array around the current rpm value.
+ * Variance keeps values realistic and chart visually interesting.
+ */
+function generateRpmTrend(baseRpm, points = 12) {
+  const trend  = [];
+  const labels = [];
+  let   prev   = baseRpm * 0.85;        // start slightly below
+
+  for (let i = 0; i < points; i++) {
+    // random walk ±8% of base, drifting toward baseRpm
+    const drift    = (baseRpm - prev) * 0.35;
+    const noise    = (Math.random() - 0.5) * baseRpm * 0.12;
+    prev           = Math.max(0, Math.round(prev + drift + noise));
+    trend.push(prev);
+    labels.push(`T-${points - i - 1}`);
+  }
+  // force last point to match current rpm exactly
+  trend[points - 1]  = baseRpm;
+  labels[points - 1] = "Now";
+  return { trend, labels };
+}
+
+/* ================================================================
+   ③ CHART INSTANCES (module-level so they can be destroyed/rebuilt)
+================================================================ */
+let doughnutChartInstance = null;
+let lineChartInstance     = null;
+
+/**
+ * Build or rebuild the Doughnut chart
+ */
+function renderDoughnutChart(runSec, stopSec) {
+  const ctx = document.getElementById("doughnutChart").getContext("2d");
+
+  if (doughnutChartInstance) doughnutChartInstance.destroy();
+
+  doughnutChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Run Time", "Stop Time"],
+      datasets: [{
+        data:            [runSec, stopSec],
+        backgroundColor: ["#22c55e", "#ef4444"],
+        hoverBackgroundColor: ["#16a34a", "#dc2626"],
+        borderWidth:     0,
+        borderRadius:    4,
+        spacing:         3
+      }]
+    },
+    options: {
+      responsive:  true,
+      cutout:      "72%",
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const sec   = ctx.parsed;
+              const label = ctx.label;
+              return ` ${label}: ${secToHrsMin(sec)}`;
+            }
+          },
+          backgroundColor: "#1e293b",
+          borderColor:     "#334155",
+          borderWidth:     1,
+          titleColor:      "#f1f5f9",
+          bodyColor:       "#94a3b8",
+          padding:         12,
+          cornerRadius:    8
+        }
       },
-      options: {
-        plugins: {
-          legend: { display: false },
-        },
-        cutout: '70%',
+      animation: {
+        animateRotate: true,
+        duration:      1200,
+        easing:        "easeInOutQuart"
       }
-    });
+    }
+  });
+}
+
+/**
+ * Build or rebuild the Line chart
+ */
+function renderLineChart(baseRpm) {
+  const ctx           = document.getElementById("lineChart").getContext("2d");
+  const { trend, labels } = generateRpmTrend(baseRpm);
+
+  if (lineChartInstance) lineChartInstance.destroy();
+
+  // gradient fill
+  const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+  gradient.addColorStop(0,   "rgba(59,130,246,0.35)");
+  gradient.addColorStop(1,   "rgba(59,130,246,0.01)");
+
+  lineChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label:           "RPM",
+        data:            trend,
+        borderColor:     "#3b82f6",
+        backgroundColor: gradient,
+        borderWidth:     2.5,
+        pointRadius:     4,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#3b82f6",
+        pointBorderColor:     "#0f172a",
+        pointBorderWidth:     2,
+        fill:            true,
+        tension:         0.45
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      scales: {
+        x: {
+          grid: {
+            color:     "rgba(51,65,85,0.6)",
+            drawBorder: false
+          },
+          ticks: {
+            color:    "#64748b",
+            font:     { size: 11 },
+            maxRotation: 0
+          }
+        },
+        y: {
+          grid: {
+            color:     "rgba(51,65,85,0.6)",
+            drawBorder: false
+          },
+          ticks: {
+            color:    "#64748b",
+            font:     { size: 11 },
+            callback: v => v + " rpm"
+          },
+          beginAtZero: false
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1e293b",
+          borderColor:     "#334155",
+          borderWidth:     1,
+          titleColor:      "#f1f5f9",
+          bodyColor:       "#94a3b8",
+          padding:         12,
+          cornerRadius:    8,
+          callbacks: {
+            label: ctx => ` RPM: ${ctx.parsed.y}`
+          }
+        }
+      },
+      animation: { duration: 1200, easing: "easeInOutQuart" }
+    }
+  });
+}
+
+/* ================================================================
+   ④ CORE RENDER FUNCTION
+   ──────────────────────────────────────────────────────────────
+   Call renderDashboard(machineData) whenever data changes.
+   This is the ONLY function that reads machineData and writes
+   to the DOM — making it trivial to wire up Firebase later.
+================================================================ */
+function renderDashboard(data) {
+
+  /* ── Derived values ─────────────────────────────── */
+  const offline    = isOffline(data.last_update_time);
+  const efficiency = calcEfficiency(data.run_time_sec, data.stop_time_sec);
+  const health     = calcHealthScore(efficiency, data.rpm, data.status);
+  const totalSec   = data.run_time_sec + data.stop_time_sec;
+  const runHrs     = parseFloat(secToHrs(data.run_time_sec));
+  const stopHrs    = parseFloat(secToHrs(data.stop_time_sec));
+  const totalHrs   = parseFloat(secToHrs(totalSec));
+  const runPct     = totalSec > 0 ? Math.round((data.run_time_sec / totalSec) * 100) : 0;
+  const stopPct    = totalSec > 0 ? Math.round((data.stop_time_sec / totalSec) * 100) : 0;
+  const uph        = runHrs > 0 ? Math.round(data.today_count / runHrs) : 0; // units per hour
+
+  /* ── Status string ──────────────────────────────── */
+  let statusClass, statusText;
+  if (offline) {
+    statusClass = "offline";
+    statusText  = "Offline";
+  } else if (data.status === 1) {
+    statusClass = "running";
+    statusText  = "Running";
+  } else {
+    statusClass = "stopped";
+    statusText  = "Stopped";
   }
+
+  /* ── Efficiency bar colour ──────────────────────── */
+  let effBarColor;
+  if (efficiency >= 80)       effBarColor = "#22c55e";
+  else if (efficiency >= 50)  effBarColor = "#f59e0b";
+  else                        effBarColor = "#ef4444";
+
+  /* ── Insight text + class ───────────────────────── */
+  let insightClass, insightIcon, insightText;
+  if (offline) {
+    insightClass = "bad";
+    insightIcon  = "📡";
+    insightText  = "Machine is offline. No data received in the last 20 seconds. Please check the connection.";
+  } else if (efficiency >= 85) {
+    insightClass = "good";
+    insightIcon  = "✅";
+    insightText  = "Machine is running efficiently. Operational targets are being met with minimal downtime.";
+  } else if (efficiency >= 60) {
+    insightClass = "warn";
+    insightIcon  = "⚠️";
+    insightText  = "Moderate idle time detected. Consider reviewing stop causes to improve throughput.";
+  } else {
+    insightClass = "bad";
+    insightIcon  = "🔴";
+    insightText  = "High idle time detected. Efficiency is critically low. Immediate inspection recommended.";
+  }
+
+  /* ── Health bar colour ──────────────────────────── */
+  let healthBarColor;
+  if (health >= 80)       healthBarColor = "#a855f7";
+  else if (health >= 50)  healthBarColor = "#f59e0b";
+  else                    healthBarColor = "#ef4444";
+
+  /* ─────────────────────────────────────────────────
+     DOM UPDATES
+  ───────────────────────────────────────────────── */
+
+  // Header
+  document.getElementById("machineName").textContent    = data.name;
+  document.getElementById("lastUpdateTime").textContent = data.last_update_time;
+  document.getElementById("statusText").textContent     = statusText;
+
+  const badge = document.getElementById("statusBadge");
+  badge.className = `status-badge ${statusClass}`;
+
+  // KPI — animated counters
+  animateCounter("kpiRpm",      data.rpm,          0);
+  animateCounter("kpiCount",    data.today_count,  0);
+  animateCounter("kpiRunTime",  runHrs,             2);
+  animateCounter("kpiStopTime", stopHrs,            2);
+  animateCounter("kpiEff",      efficiency,         0);
+  animateCounter("kpiHealth",   health,             0);
+
+  // KPI sub-labels
+  document.getElementById("kpiRpmSub").textContent =
+    data.status === 1 && !offline ? "● Spindle active" : "● Spindle idle";
+  document.getElementById("kpiCountSub").textContent =
+    `≈ ${uph} units / running hour`;
+  document.getElementById("kpiRunSub").textContent =
+    secToHrsMin(data.run_time_sec) + " total";
+  document.getElementById("kpiStopSub").textContent =
+    secToHrsMin(data.stop_time_sec) + " total";
+
+  // KPI efficiency bar
+  const effBarEl       = document.getElementById("kpiEffBar");
+  effBarEl.style.background = effBarColor;
+  setTimeout(() => { effBarEl.style.width = efficiency + "%"; }, 100);
+
+  // KPI health bar
+  const healthBarEl    = document.getElementById("kpiHealthBar");
+  healthBarEl.style.background = healthBarColor;
+  setTimeout(() => { healthBarEl.style.width = health + "%"; }, 100);
+
+  // KPI health sub
+  let healthLabel;
+  if (health >= 80)       healthLabel = "Excellent condition";
+  else if (health >= 60)  healthLabel = "Good condition";
+  else if (health >= 40)  healthLabel = "Fair — monitor closely";
+  else                    healthLabel = "Poor — needs attention";
+  document.getElementById("kpiHealthSub").textContent = healthLabel;
+
+  // Doughnut centre
+  document.getElementById("doughnutCenter").textContent = efficiency + "%";
+
+  // Charts
+  renderDoughnutChart(data.run_time_sec, data.stop_time_sec);
+  renderLineChart(data.rpm);
+
+  // Analytics — progress bars (delayed for CSS transition)
+  document.getElementById("anaEff").textContent      = efficiency + "%";
+  document.getElementById("anaRunShare").textContent = runPct + "%";
+  document.getElementById("anaStopShare").textContent= stopPct + "%";
+
+  setTimeout(() => {
+    document.getElementById("anaEffBar").style.width   = efficiency + "%";
+    document.getElementById("anaRunBar").style.width   = runPct + "%";
+    document.getElementById("anaStopBar").style.width  = stopPct + "%";
+  }, 150);
+
+  // Ratio bar
+  document.getElementById("ratioRun").style.width  = runPct + "%";
+  document.getElementById("ratioStop").style.width = stopPct + "%";
+  document.getElementById("ratioRun").textContent  = runPct >= 15  ? runPct  + "%" : "";
+  document.getElementById("ratioStop").textContent = stopPct >= 15 ? stopPct + "%" : "";
+  document.getElementById("ratioRunLbl").textContent  = `Run: ${secToHrsMin(data.run_time_sec)}`;
+  document.getElementById("ratioStopLbl").textContent = `Stop: ${secToHrsMin(data.stop_time_sec)}`;
+
+  // Insight box
+  const insightBox = document.getElementById("insightBox");
+  insightBox.className               = `insight-box ${insightClass}`;
+  document.getElementById("insightIcon").textContent = insightIcon;
+  document.getElementById("insightText").textContent = insightText;
+
+  // Detailed stats table
+  document.getElementById("statName").textContent   = data.name;
+  document.getElementById("statStatus").textContent = statusText;
+  document.getElementById("statStatus").className   =
+    `s-val ${statusClass === "running" ? "green" : statusClass === "stopped" ? "red" : ""}`;
+  document.getElementById("statRpm").textContent    = data.rpm + " rpm";
+  document.getElementById("statRun").textContent    = secToHrsMin(data.run_time_sec);
+  document.getElementById("statStop").textContent   = secToHrsMin(data.stop_time_sec);
+  document.getElementById("statTotal").textContent  = secToHrsMin(totalSec);
+  document.getElementById("statEff").textContent    = efficiency + "%";
+  document.getElementById("statUph").textContent    = uph + " units/hr";
+  document.getElementById("statDate").textContent   = data.current_date;
+  document.getElementById("statUpdate").textContent = data.last_update_time;
+
+  // Footer
+  document.getElementById("footerDate").textContent =
+    "Report Date: " + data.current_date + "  |  Last Sync: " + data.last_update_time;
+}
+
+
+/* ================================================================
+   🔥 FIREBASE REAL-TIME INTEGRATION (FINAL VERSION)
+================================================================ */
+
+// 🔹 Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAmkJO9jE4X2_83Jh3HIj701ldKJOfeGo0",
+  databaseURL: "https://knit-factory-monitor-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+// 🔹 Init
+firebase.initializeApp(firebaseConfig);
+
+// 🔹 Login
+firebase.auth().signInWithEmailAndPassword("volthigh1@gmail.com", "Knit1234")
+.then(() => {
+  console.log("Firebase Connected");
+
+  // 🔹 Change machine ID here (dynamic later)
+  const MACHINE_ID = "machine_1";
+
+  const dbRef = firebase.database().ref("machines/" + MACHINE_ID);
+
+  // 🔥 Real-time listener
+  dbRef.on("value", (snapshot) => {
+    const data = snapshot.val();
+
+    if (!data) {
+      console.log("No data found");
+      return;
+    }
+
+    // 🔥 Map Firebase → UI object
+    const machineData = {
+      name: MACHINE_ID,
+      rpm: data.rpm || 0,
+      today_count: data.today_count || 0,
+      run_time_sec: data.run_time_sec || 0,
+      stop_time_sec: data.stop_time_sec || 0,
+      status: data.status || 0,
+      last_update_time: data.last_update_time || "",
+      current_date: data.current_date || ""
+    };
+
+    // 🔥 Render UI (NO CHANGE NEEDED)
+    renderDashboard(machineData);
+
+  });
+
+})
+.catch(err => {
+  alert("Firebase Login Failed: " + err.message);
+});
 </script>
 
 </body>
