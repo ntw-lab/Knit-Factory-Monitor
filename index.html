@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Machine Detail Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
   <style>
     /* ============================================================
        RESET & BASE
@@ -1157,12 +1160,12 @@ function renderDashboard(data) {
   badge.className = `status-badge ${statusClass}`;
 
   // KPI — animated counters
-  animateCounter("kpiRpm",      data.rpm,          0);
-  animateCounter("kpiCount",    data.today_count,  0);
-  animateCounter("kpiRunTime",  runHrs,             2);
-  animateCounter("kpiStopTime", stopHrs,            2);
-  animateCounter("kpiEff",      efficiency,         0);
-  animateCounter("kpiHealth",   health,             0);
+  document.getElementById("kpiRpm").textContent = data.rpm;
+  document.getElementById("kpiCount").textContent = data.today_count;
+  document.getElementById("kpiRunTime").textContent = runHrs.toFixed(2);
+  document.getElementById("kpiStopTime").textContent = stopHrs.toFixed(2);
+  document.getElementById("kpiEff").textContent = efficiency;
+  document.getElementById("kpiHealth").textContent = health;
 
   // KPI sub-labels
   document.getElementById("kpiRpmSub").textContent =
