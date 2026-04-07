@@ -1268,13 +1268,16 @@ firebase.auth().signInWithEmailAndPassword("volthigh1@gmail.com", "Knit1234")
   const dbRef = firebase.database().ref("machines/" + MACHINE_ID);
 
   // 🔥 Real-time listener
-  dbRef.on("value", (snapshot) => {
-    const data = snapshot.val();
+ dbRef.on("value", (snapshot) => {
 
-    if (!data) {
-      console.log("No data found");
-      return;
-    }
+  console.log("RAW:", snapshot.val()); // ✅ ADD HERE
+
+  const data = snapshot.val();
+
+  if (!data) {
+    console.log("No data found");
+    return;
+  }
 
     // 🔥 Map Firebase → UI object
     const machineData = {
